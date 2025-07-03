@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lmantrix On Top</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: rgb(245,245,245); color: rgb(34,34,34); margin: 0; padding: 20px; }
+    h1 { color: rgb(27, 77, 142); text-align: center; }
+    .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    select, input, button { width: 100%; margin: 10px 0; padding: 10px; font-size: 1rem; }
+    button { background: rgb(27, 77, 142); color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: rgb(20, 64, 107); }
+    .result { margin-top: 20px; white-space: pre-wrap; background: #eef2f7; padding: 15px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Lmantrix On Top</h1>
+  <div class="container">
+    <label for="mode">Select Calculator:</label>
+    <select id="mode">
+      <option value="craft">Crafting</option>
+      <option value="tame">Taming</option>
+      <option value="demolish">Demolition</option>
+    </select>
+
+    <div id="section-craft">
+      <label for="craft-item">Select item:</label>
+      <select id="craft-item">
+        <option value="metal_sword">Metal Sword</option>
+        <option value="tek_shield">Tek Shield</option>
+      </select>
+      <label for="craft-qty">Quantity:</label>
+      <input type="number" id="craft-qty" value="1" min="1">
+      <button id="craft-btn">Calculate Craft</button>
+      <div class="result" id="craft-result"></div>
+    </div>
+
+    <div id="section-tame" style="display:none;">
+      <label for="tame-creature">Select creature:</label>
+      <select id="tame-creature">
+        <option value="rex">Rex</option>
+        <option value="achatina">Achatina</option>
+      </select>
+      <label for="tame-level">Creature level:</label>
+      <input type="number" id="tame-level" value="1" min="1" max="300">
+      <button id="tame-btn">Calculate Tame</button>
+      <div class="result" id="tame-result"></div>
+    </div>
+
+    <div id="section-demolish" style="display:none;">
+      <label for="demolish-structure">Select structure:</label>
+      <select id="demolish-structure">
+        <option value="tek_door">Tek Door</option>
+        <option value="tek_shield">Tek Shield</option>
+      </select>
+      <label for="demolish-qty">Quantity:</label>
+      <input type="number" id="demolish-qty" value="1" min="1">
+      <button id="demolish-btn">Calculate Demolition</button>
+      <div class="result" id="demolish-result"></div>
+    </div>
+  </div>
+
+  <script>
+    const crafts = {
+      metal_sword: { metal: 50, wood: 20, hide: 10 },
+      tek_shield: { metal: 600, polymer: 100, crystal: 80 }
+    };
+
+    const tames = {
+      rex: { meat: 40, narcotics: 15 },
+      achatina: { berries: 80, narcotics: 0 }
+    };
+
+    const demolish = {
+      tek_door: { metal: 240, polymer: 40 },
+      tek_shield: { metal: 600, polymer: 100, crystal: 80 }
+    };
+
+    const stack_sizes = { metal: 300, polymer: 100, crystal: 100 };
+
+    document.getElementById('mode').addEventListener('change', function () {
+      document.getElementById('section-craft').style.display = 'none';
+      document.getElementById('section-tame').style.display = 'none';
+      document.getElementById('section-demolish').style.display = 'none';
+      document.getElementById('section-' + this.value).style.display = 'block';
+    });
+
+    document.getElementById('craft-btn').addEventListener('click', function () {
+      const item = document.getElementById('craft-item').value;
+      const qty = parseInt(document.getElementById('craft-qty').value);
+      const res = crafts[item];
+      let output = '';
+      for (let mat in res) {
+        output += `- ${mat}: ${res[mat] * qty}
+`;
+      }
+      document.getElementById('craft-result').textContent = output;
+    });
+
+    document.getElementById('tame-btn').addEventListener('click', function () {
+      const creature = document.getElementById('tame-creature').value;
+      const lvl = parseInt(document.getElementById('tame-level').value);
+      const res = tames[creature];
+      let output = '';
+      for (let mat in res) {
+        output += `- ${mat}: ${res[mat] * lvl}
+`;
+      }
+      document.getElementById('tame-result').textContent = output;
+    });
+
+    document.getElementById('demolish-btn').addEventListener('click', function () {
+      const structure = document.getElementById('demolish-structure').value;
+      const qty = parseInt(document.getElementById('demolish-qty').value);
+      const res = demolish[structure];
+      let output = '';
+      for (let mat in res) {
+        const total = Math.floor(res[mat] * qty * 0.5); // 50% return
+        const stacks = Math.ceil(total / (stack_sizes[mat] || 100));
+        const dedicated = Math.ceil(stacks / 180);
+        output += `- ${mat}: ${total} (~${dedicated} dedicated box${dedicated > 1 ? 'es' : ''})
+`;
+      }
+      document.getElementById('demolish-result').textContent = output;
+    });
+  </script>
+</body>
+</html>
