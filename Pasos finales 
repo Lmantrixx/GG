@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content=device-width, initial-scale=1.0>
+  <title>Lmantrix On Top - ASA PvP</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+    header { background: #1d4ed8; padding: 1rem; color: white; text-align: center; }
+    nav { display: flex; justify-content: space-around; background: #333; }
+    nav button { flex: 1; padding: 1em; color: white; background: #333; border: none; font-size: 1em; }
+    nav button.active { background: #1d4ed8; }
+    .container { padding: 1em; max-width: 800px; margin: auto; }
+    .hidden { display: none; }
+    select, input, button { width: 100%; padding: 0.7em; margin: 0.5em 0; font-size: 1em; }
+    button.action { background: #1d4ed8; color: white; border: none; border-radius: 5px; }
+    .result { white-space: pre-wrap; background: #eef; padding: 1em; border-radius: 5px; margin-top: 1em; }
+    .server-mode { background: #e2e8f0; padding: 0.5em; border-radius: 5px; margin-bottom: 1em; }
+  </style>
+</head>
+<body>
+  <header><h1>Lmantrix On Top - ASA PvP</h1></header>
+  <div class="container">
+    <div class="server-mode">
+      <label for="server">Select Server Mode:</label>
+      <select id="server">
+        <option value="1">Official PvP (x1)</option>
+        <option value="2">Small Tribes (x2)</option>
+        <option value="3">ARKpocalypse (x3)</option>
+        <option value="2.5">Conquest (x2.5)</option>
+      </select>
+    </div>
+  </div>
+
+  <nav>
+    <button onclick="switchTab('craft')" id="tab-craft" class="active">Craft</button>
+    <button onclick="switchTab('tame')" id="tab-tame">Tame</button>
+    <button onclick="switchTab('demolish')" id="tab-demolish">Demolish</button>
+  </nav>
+
+  <div class="container">
+    <!-- Craft Tab -->
+    <div id="craft">
+      <label for="craft-item">Select Item to Craft:</label>
+      <select id="craft-item">
+        <option value="tek_gen">Tek Generator</option>
+        <option value="heavy_turret">Heavy Turret</option>
+      </select>
+      <input type="number" id="craft-qty" placeholder="Quantity" value="1" min="1"/>
+      <button class="action" onclick="calcCraft()">Calculate</button>
+      <div class="result" id="craft-result"></div>
+    </div>
+
+    <!-- Tame Tab -->
+    <div id="tame" class="hidden">
+      <label for="tame-creature">Select Creature:</label>
+      <select id="tame-creature">
+        <option value="rex">Rex</option>
+        <option value="shadowmane">Shadowmane</option>
+      </select>
+      <input type="number" id="tame-level" placeholder="Level" value="1" min="1"/>
+      <button class="action" onclick="calcTame()">Calculate</button>
+      <div class="result" id="tame-result"></div>
+    </div>
+
+    <!-- Demolish Tab -->
+    <div id="demolish" class="hidden">
+      <label for="demolish-structure">Select Structure:</label>
+      <select id="demolish-structure">
+        <option value="tek_gen">Tek Generator</option>
+        <option value="heavy_turret">Heavy Turret</option>
+      </select>
+      <input type="number" id="demolish-qty" placeholder="Quantity" value="1" min="1"/>
+      <button class="action" onclick="calcDemolish()">Calculate</button>
+      <div class="result" id="demolish-result"></div>
+    </div>
+  </div>
+
+  <script>
+    const craftDB = {
+      tek_gen: { metal: 2400, polymer: 120, crystal: 450, element: 30 },
+      heavy_turret: { metal: 1200, polymer: 60, electronics: 40 }
+    };
+
+    const tameDB = {
+      rex: {
+        food: {
+          "Superior Kibble": { base: 7, efficiency: 100 },
+          "Raw Mutton": { base: 15, efficiency: 65 },
+          "Raw Prime Meat": { base: 20, efficiency: 45 }
+        },
+        narcotics: 50,
+        baseTime: 20
+      },
+      shadowmane: {
+        food: {
+          "Fish (1.5x size)": { base: 12, efficiency: 100 },
+          "Fish (1.0x size)": { base: 25, efficiency: 60 }
+        },
+        narcotics: 20,
+        baseTime: 30
+      }
+    };
+
+    const demolishDB = {
+      tek_gen: { metal: 2400, polymer: 120, crystal: 450, element: 30 },
+      heavy_turret: { metal: 1200, polymer: 60, electronics: 40 }
+    };
+
+    const stackSize = { metal: 300, polymer: 100, crystal: 100, electronics: 100 };
+
+    const mode = () => parseFloat(document.getElementById("server").value);
+
+    function switchTab(tab) {
+      ["craft", "tame", "demolish"].forEach(t => {
+        document.getElementById(t).classList.add("hidden");
+        document.getElementById("tab-" + t).classList.remove("active");
+      });
+      document.getElementById(tab).classList.remove("hidden");
+      document.getElementById("tab-" + tab).classList.add("active");
+    }
+
+    function calcCraft() {
+      const item = document.getElementById("craft-item").value;
+      const qty = parseInt(document.getElementById("craft-qty").value);
+      const res = craftDB[item];
+      let out = `Crafting ${qty}x ${item.replace("_", " ").toUpperCase()}:
+`;
+      for (let mat in res) out += `- ${mat}: ${res[mat] * qty}
+`;
+      document.getElementById("craft-result").textContent = out;
+    }
+
+    function calcTame() {
+      const creature = document.getElementById("tame-creature").value;
+      const lvl = parseInt(document.getElementById("tame-level").value);
+      const data = tameDB[creature];
+      const rate = mode();
+      let out = `Taming ${creature.toUpperCase()} (Lvl ${lvl}) - Server x${rate}:
+`;
+      for (let food in data.food) {
+        const base = data.food[food].base;
+        const eff = data.food[food].efficiency;
+        const total = Math.ceil(base * lvl / rate);
+        out += `- ${food}: ${total} units (+${eff}% tame each)
+`;
+      }
+      const narc = Math.ceil(data.narcotics * lvl / rate);
+      const time = Math.ceil(data.baseTime * lvl / rate);
+      out += `- Narcotics: ${narc}
+- Time: ~${time} mins
+`;
+      document.getElementById("tame-result").textContent = out;
+    }
+
+    function calcDemolish() {
+      const item = document.getElementById("demolish-structure").value;
+      const qty = parseInt(document.getElementById("demolish-qty").value);
+      const res = demolishDB[item];
+      let out = `Demolishing ${qty}x ${item.replace("_", " ").toUpperCase()} (50% return):
+`;
+      for (let mat in res) {
+        if (mat === "element") continue; // no Element return
+        const total = Math.floor(res[mat] * qty * 0.5);
+        const stacks = Math.ceil(total / (stackSize[mat] || 100));
+        const boxes = Math.ceil(stacks / 180);
+        out += `- ${mat}: ${total} (~${boxes} dedicated box${boxes > 1 ? 'es' : ''})
+`;
+      }
+      document.getElementById("demolish-result").textContent = out;
+    }
+  </script>
+</body>
+</html>
